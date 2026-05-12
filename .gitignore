@@ -5,8 +5,6 @@ __pycache__/
 
 # Virtual environment
 .venv/
-venv/
-env/
 
 # IDE folders
 .vscode/
@@ -15,3 +13,7 @@ env/
 # OS junk files
 .DS_Store
 Thumbs.db
+
+# Training outputs
+tensorboard/
+trained_models/

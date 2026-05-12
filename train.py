@@ -17,6 +17,20 @@ from collections import deque
 import numpy as np
 import torch
 import torch.nn as nn
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except Exception:
+    try:
+        from tensorboardX import SummaryWriter
+    except Exception:
+        class SummaryWriter:
+            def __init__(self, *args, **kwargs):
+                pass
+            def add_scalar(self, *args, **kwargs):
+                pass
+            def close(self):
+                pass
+
 
 from src.deep_q_network import DeepQNetwork
 from src.tetris import Tetris
@@ -136,6 +150,8 @@ def train(opt):
     os.makedirs(opt.log_path, exist_ok=True)
     os.makedirs(opt.saved_path, exist_ok=True)
 
+    writer = SummaryWriter(opt.log_path)
+
     env = Tetris(width=opt.width, height=opt.height, block_size=opt.block_size)
 
     policy_net = DeepQNetwork().to(device)
@@ -209,6 +225,11 @@ def train(opt):
                 f"Replay: {len(replay_memory)}"
             )
 
+            writer.add_scalar("Train/Score", final_score, epoch)
+            writer.add_scalar("Train/Tetrominoes", final_tetrominoes, epoch)
+            writer.add_scalar("Train/Cleared lines", final_cleared_lines, epoch)
+            writer.add_scalar("Train/Epsilon", epsilon, epoch)
+
             if epoch > 0 and epoch % opt.save_interval == 0:
                 checkpoint_path = os.path.join(opt.saved_path, f"tetris_checkpoint_{epoch}.pth")
                 save_checkpoint(
@@ -256,6 +277,9 @@ def train(opt):
         torch.nn.utils.clip_grad_norm_(policy_net.parameters(), max_norm=10)
         optimizer.step()
 
+        if global_step % opt.log_interval == 0:
+            writer.add_scalar("Train/Loss", loss.item(), global_step)
+
         if global_step % opt.target_update_interval == 0:
             target_net.load_state_dict(policy_net.state_dict())
 
@@ -270,7 +294,7 @@ def train(opt):
         get_epsilon(epoch, opt),
     )
     torch.save(policy_net, os.path.join(opt.saved_path, "tetris"))
-
+    writer.close()
 
 if __name__ == "__main__":
     train(get_args())
