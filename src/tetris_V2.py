@@ -1,3 +1,5 @@
+#update reward distribution
+
 import random
 
 import cv2
@@ -202,6 +204,8 @@ class Tetris:
         return board
 
     def step(self, action, render=True, video=None):
+        old_holes = self.get_holes(self.board)
+        old_bumpiness, old_height = self.get_bumpiness_and_height(self.board)
         x, num_rotations = action
         self.current_pos = {"x": x, "y": 0}
         for _ in range(num_rotations):
@@ -219,15 +223,47 @@ class Tetris:
         self.board = self.store(self.piece, self.current_pos)
 
         lines_cleared, self.board = self.check_cleared_rows(self.board)
-        score = 1 + (lines_cleared ** 2) * self.width
+
+        new_holes = self.get_holes(self.board)
+        new_bumpiness, new_height = self.get_bumpiness_and_height(self.board)
+
+        delta_holes = new_holes - old_holes
+        delta_bumpiness = new_bumpiness - old_bumpiness
+        delta_height = new_height - old_height
+
+        # Calculate metrics for weighted scoring
+        holes = self.get_holes(self.board)
+        bumpiness, total_height = self.get_bumpiness_and_height(self.board)
+        
+        # Calculate max_height
+        board_array = np.array(self.board)
+        mask = board_array != 0
+        invert_heights = np.where(mask.any(axis=0), np.argmax(mask, axis=0), self.height)
+        heights = self.height - invert_heights
+        max_height = np.max(heights)
+        
+        # Weighted score calculation
+        score = (
+            40 * lines_cleared
+            - 8 * delta_holes
+            - 2 * delta_bumpiness
+            - 1 * delta_height
+        )
+        
+        # Additional penalty if max_height >= 15
+        if max_height >= 16:
+            score -= 5  # linear penalty for max height >= 16
+        
+        score += 0.1 #survival reward
         self.score += score
         self.tetrominoes += 1
         self.cleared_lines += lines_cleared
         if not self.gameover:
             self.new_piece()
         if self.gameover:
-            score -= 2
-            self.score -= 2
+            score = -100
+            self.score -= 100
+
         return score, self.gameover
 
     def render(self, video=None):
