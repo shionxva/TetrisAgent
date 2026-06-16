@@ -97,7 +97,14 @@ class TetrisGame:
     def lock_piece(self):
         self.env.board = self.env.store(self.env.piece,self.env.current_pos)
         lines_cleared, self.env.board = (self.env.check_cleared_rows(self.env.board))
-
+        score_table = {
+            0: 0,
+            1: 100,
+            2: 300,
+            3: 500,
+            4: 800
+        }
+        self.env.score += score_table.get(lines_cleared,0)
         self.env.cleared_lines += lines_cleared
         self.env.tetrominoes += 1
         self.env.new_piece()
@@ -126,8 +133,44 @@ class TetrisGame:
         moves.append("DROP")
         return moves
     
-    def execute_plan(self, plan):
-        for move in plan:
+    def format_moves(self, moves):
+        if not moves:
+            return ""
+
+        mapping = {
+            "ROTATE": "Rot",
+            "LEFT": "L",
+            "RIGHT": "R",
+            "DROP": "Drop"
+        }
+
+        result = []
+        current = moves[0]
+        count = 1
+
+        for move in moves[1:]:
+            if move == current:
+                count += 1
+            else:
+                text = mapping[current]
+                if count > 1:
+                    result.append(f"{text}{count}")
+                else:
+                    result.append(text)
+                current = move
+                count = 1
+
+        text = mapping[current]
+        if count > 1:
+            result.append(f"{text}{count}")
+        else:
+            result.append(text)
+
+        return " ".join(result)
+    
+    def execute_moves(self, moves):
+        for move in moves:
+            self.env.ai_current_move = f"> {move}" # Update the AI move display
             if move == "LEFT":
                 self.move_left()
             elif move == "RIGHT":
@@ -150,12 +193,13 @@ def main():
 
         action = ai.choose_action(game.env)
         moves = game.AI_moves(action)
-        print(moves)
+        game.env.ai_moves = game.format_moves(moves)
+        print(moves) #logs
 
         if action is None:
             break
 
-        game.execute_plan(moves)
+        game.execute_moves(moves)
 
         print(
         f"Pieces: {game.env.tetrominoes:5d} | "
