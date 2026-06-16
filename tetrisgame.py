@@ -44,6 +44,7 @@ class AIController:
 class TetrisGame:
     def __init__(self):
         self.env = Tetris()
+        self.move_queue = []
 
     def valid_position(self, piece, x, y):
         for py in range(len(piece)):
@@ -168,44 +169,85 @@ class TetrisGame:
 
         return " ".join(result)
     
-    def execute_moves(self, moves):
-        for move in moves:
-            self.env.ai_current_move = f"> {move}" # Update the AI move display
-            if move == "LEFT":
-                self.move_left()
-            elif move == "RIGHT":
-                self.move_right()
-            elif move == "ROTATE":
-                self.rotate_piece()
-            elif move == "DROP":
-                self.hard_drop()
-            self.env.render()
+    # def execute_moves(self, moves):
+    #     for move in moves:
+    #         self.env.ai_current_move = f"> {move}" # Update the AI move display
+    #         if move == "LEFT":
+    #             self.move_left()
+    #         elif move == "RIGHT":
+    #             self.move_right()
+    #         elif move == "ROTATE":
+    #             self.rotate_piece()
+    #         elif move == "DROP":
+    #             self.hard_drop()
+    #         self.env.render()
 
-            time.sleep(0.067)
+    #         time.sleep(0.067)
+
+    def execute_next_move(self):
+        if not self.move_queue:
+            return False
+
+        move = self.move_queue.pop(0)
+        self.env.ai_current_move = move
+
+        if move == "LEFT":
+            self.move_left()
+
+        elif move == "RIGHT":
+            self.move_right()
+
+        elif move == "ROTATE":
+            self.rotate_piece()
+
+        elif move == "DROP":
+            self.hard_drop()
+            return True   # piece locked
+        return False
 
 def main():
 
     game = TetrisGame()
-
     ai = AIController("final_models/tetris")
+    gravity_delay = 0.08
+    last_tick = time.time()
+    moves_seq = None
 
-    while True:
+    while not game.env.gameover:
+        now = time.time()
+        if now - last_tick >= gravity_delay:
+            # New piece needs moves sequence
+            if len(game.move_queue) == 0 and moves_seq is None:
+                moves_seq = ai.choose_action(game.env)
+                if moves_seq is None:
+                    break
+                game.move_queue = game.AI_moves(moves_seq)
+                print(game.move_queue)
+                game.env.ai_moves = game.format_moves(game.move_queue)
 
-        action = ai.choose_action(game.env)
-        moves = game.AI_moves(action)
-        game.env.ai_moves = game.format_moves(moves)
-        print(moves) #logs
+            # Execute one AI move
+            piece_finished = game.execute_next_move()
+            if piece_finished:
+                print(
+                    f"Pieces: {game.env.tetrominoes:5d} | "
+                    f"Score: {game.env.score:8.2f} | "
+                    f"Lines: {game.env.cleared_lines:4d}"
+                )
 
-        if action is None:
-            break
+                moves_seq = None
 
-        game.execute_moves(moves)
-
-        print(
-        f"Pieces: {game.env.tetrominoes:5d} | "
-        f"Score: {game.env.score:8.2f} | "
-        f"Lines: {game.env.cleared_lines:4d} | "
-        )
+            else:
+                should_lock = game.soft_drop()
+                if should_lock:
+                    game.lock_piece()
+                    print(
+                        f"Pieces: {game.env.tetrominoes:5d} | "
+                        f"Score: {game.env.score:8.2f} | "
+                        f"Lines: {game.env.cleared_lines:4d}"
+                    )
+                    moves_seq = None
+            last_tick = now
+        game.env.render()
 
 
 if __name__ == "__main__":
