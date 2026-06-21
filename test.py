@@ -1,7 +1,7 @@
 import argparse
 import torch
 import cv2
-from src.tetris import Tetris
+from src.tetris_V2 import Tetris
 
 
 def get_args():

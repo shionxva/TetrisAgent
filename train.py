@@ -33,7 +33,7 @@ except Exception:
 
 
 from src.deep_q_network import DeepQNetwork
-from src.tetris import Tetris
+from src.tetris_V2 import Tetris
 
 
 def get_args():
