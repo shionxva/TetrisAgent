@@ -54,8 +54,8 @@ class Tetris:
             self.width * self.block_size,
             3),
             dtype=np.uint8,
-        ) * np.array([204, 204, 255], dtype=np.uint8)
-        self.text_color = (200, 20, 220)
+        ) * np.array([91, 26, 60], dtype=np.uint8)
+        self.text_color = (72, 247, 255)
         self.ai_moves = ""
         self.ai_current_move = ""
         self.reset()
@@ -281,8 +281,8 @@ class Tetris:
 
         img = img.resize((self.width * self.block_size, self.height * self.block_size), 0)
         img = np.array(img)
-        img[[i * self.block_size for i in range(self.height)], :, :] = 0
-        img[:, [i * self.block_size for i in range(self.width)], :] = 0
+        img[[i * self.block_size for i in range(self.height)], :, :] = 64
+        img[:, [i * self.block_size for i in range(self.width)], :] = 64
 
         img = np.concatenate((img, self.extra_board), axis=1)
 
@@ -292,29 +292,29 @@ class Tetris:
         y = self.block_size
 
         cv2.putText(img, "Score:", (x, y),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color)
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color, thickness=2)
         cv2.putText(img, str(self.score), (x, y + line_gap),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.7, color=self.text_color)
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.7, color=self.text_color, thickness=2)
 
         y += section_gap + line_gap
         cv2.putText(img, "Pieces:", (x, y),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color)
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color, thickness=2)
         cv2.putText(img, str(self.tetrominoes), (x, y + line_gap),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.7, color=self.text_color)
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.7, color=self.text_color, thickness=2)
         
         y += section_gap + line_gap
         cv2.putText(img, "Lines:", (x, y),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color)
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color, thickness=2)
         cv2.putText(img, str(self.cleared_lines), (x, y + line_gap),
-                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.7, color=self.text_color)
+                    fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.7, color=self.text_color, thickness=2)
         
         y += section_gap + line_gap
         cv2.putText(img,"AI prediction:",(x,y),
-            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color)
+            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.8, color=self.text_color, thickness=2)
         cv2.putText(img,self.ai_moves,(x, y + line_gap),
-            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.6, color=self.text_color)
+            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.6, color=self.text_color, thickness=2)
         cv2.putText(img,self.ai_current_move,(x, y + line_gap*2),
-            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.6, color=self.text_color)
+            fontFace=cv2.FONT_HERSHEY_DUPLEX, fontScale=0.6, color=self.text_color, thickness=2)
 
         if video:
             video.write(img)
